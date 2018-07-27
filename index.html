@@ -1,0 +1,282 @@
+<html>
+<head>
+  <style>
+  body{
+    background-color: #ccc;
+    font-family: Arial, Helvetica, sans-serif;
+  }
+  .team{
+    padding: 10px 15px;
+    display: inline-block;
+    margin: 1px;
+    text-align: center;
+    width: 125px;
+    display: none;
+  }
+  .flag{
+    display: inline-block;
+    width: 26px;
+    height: 26px;
+    vertical-align: middle;
+    margin-left: 10px;
+    padding: 1px;
+    border-radius: 26px;
+  }
+  svg{
+    /* border: 2px solid rgba(0,0,0,.2); */
+    /* border-radius: 15px; */
+  }
+  span{
+    display: inline-block;
+    vertical-align: middle;
+  }
+  .container{
+    width: 1000px;
+    margin: 0px auto;
+  }
+  </style>
+</head>
+<body>
+  <div class="flagContainer"></div>
+
+  <div class="container">
+  </div>
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+  <script src="https://d3js.org/d3.v5.min.js"></script>
+  <script src="https://d3js.org/d3-selection-multi.v1.min.js"></script>
+
+<script>
+var BG_COLOR = '#ccc';
+
+var width = 960,
+    height = 960,
+    radius = Math.min(width, height) / 2,
+    groups = 8,
+    cellHeight = .08
+
+getContrast = black_text => ((black_text) ? '000000':'FFFFFF')
+toRad = deg => (deg*Math.PI/180)
+gAngle = (d,g) => [(d*360/g)+1,(d*(360/g))+(360/g)-1]
+
+r16Angle =  d => [(d*360/8)+1,(d*(360/8))+(360/8)-1]
+
+$.getJSON("http://localhost:8888/world-cup-bracket/api/teams", (data)=>{
+  // console.log(data[0]);
+  for( key in data[0]){
+    const team = data[0][key];
+    const color = getContrast(team.black_text);
+
+    // console.log(color);
+    $(".flagContainer")
+      .append(`<div class="team" style="color: #${color}; background-color: #${team.hex}" id="${team.abbr}"><span class="team_text"><b>${team.abbr}</b><div class="flag" style=" background-color: rgba(0,0,0,.3d)">${team.flag_svg}</span></div></div>`);
+    $(`.flagContainer #${team.abbr} svg`).prop("id",`flag-${team.abbr}`)
+  }
+  // $(".flagContainer").append(data[0][14]['flag_svg']);
+  // for(var i=0; i<)
+});
+
+console.log("-->",d3)
+
+    //,
+    // color = d3.scale.category20c();
+
+var arc1 = d3.arc()
+    .innerRadius(width/2)
+    .outerRadius(width*(cellHeight*6-.02))
+    .startAngle(d=> toRad(gAngle(d, groups)[0]) )
+    .endAngle(d=> toRad(gAngle(d, groups)[1]) )
+
+var arc2 = d3.arc()
+    .innerRadius(width*(cellHeight*6-.02))
+    .outerRadius(width*(cellHeight*5+.01))
+    .startAngle((d,i)=>{
+      var gStart = gAngle(d, groups)[0]
+      var tWidth = (gAngle(d, groups)[1] - gAngle(d, groups)[0])/4
+
+      return toRad( gStart+(tWidth*i) )
+    })
+    .endAngle((d,i)=>{
+      var gStart = gAngle(d, groups)[0]
+      var tWidth = (gAngle(d, groups)[1] - gAngle(d, groups)[0])/4
+      return toRad( gStart+(tWidth*(i+1)) )
+    })
+
+//Round 16
+var arc3 = d3.arc()
+    .innerRadius(width*cellHeight*5)
+    .outerRadius(width*cellHeight*4)
+    .startAngle(d=> toRad(gAngle(d, 8)[0]) )
+    .endAngle(d=> toRad(gAngle(d, 8)[1]) )
+
+//Round QuarterFinal
+var arc4 = d3.arc()
+    .innerRadius(width*cellHeight*4)
+    .outerRadius(width*cellHeight*3)
+    .startAngle(d=> toRad(gAngle(d, 4)[0]) )
+    .endAngle(d=> toRad(gAngle(d, 4)[1]) )
+
+//Round SemiFinal
+var arc5 = d3.arc()
+    .innerRadius(width*cellHeight*3)
+    .outerRadius(width*cellHeight*2)
+    .startAngle(d=> toRad(gAngle(d, 2)[0]) )
+    .endAngle(d=> toRad(gAngle(d, 2)[1]) )
+
+// //Round Final
+// var arc6 = d3.arc()
+//     .innerRadius(width/2-208)
+//     .outerRadius(width/2-258)
+//     .startAngle(d=> toRad(gAngle(d, 2)[0]-90) )
+//     .endAngle(d=> toRad(gAngle(d, 2)[1]-90) )
+
+
+var gRange = d3.range(0,groups), //[0-groups]
+  tRange = d3.range(0,4)
+
+var svg = d3.select(".container").append("svg")
+    .attr("width", width)
+    .attr("height", height)
+  .append("g")
+    .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+
+console.log(gRange)
+// d3.select('g')
+//   .append('path')
+//   .attr('d', arc)
+//   .style("fill","#c00")
+//   .style("stroke","#")
+var groupsBracket = svg.append("g")
+  .attr("class", "groupsContainer")
+  .selectAll("g")
+  .data(gRange)
+  .enter().append("g")
+
+groupsBracket.append("path")
+  .attr("d",arc1)
+  .attr("class","groupsTable")
+  .styles({
+    fill:"rgba(0,0,0,.5)",
+    stroke: "rgba(200,0,0,.5)",
+  })
+
+groupsBracket.each((d,i)=>{
+    console.log(d,i)
+  })
+  .selectAll(".groupTeams")
+  .data(d=>Array(4).fill(d))
+  .enter()
+  .append("path")
+  .attr("d",arc2)
+  .attr("class","groupTeams")
+  .styles({
+    fill:"rgba(0,255,0,.5)",
+    stroke: "rgba(0,0,100,.5)",
+  })
+
+groupsBracket.append("text")
+  .text(d=>String.fromCharCode(d+65))
+  .attr("transform", d=>{
+    var t = arc1.centroid(d),
+      r = (d*(360/groups))+(360/groups/2)
+    return `translate(${t}) rotate(${r})`
+  })
+  // .attr("dy", ".35em")
+  .attr('text-anchor','middle')
+  .attr('alignment-baseline','central')
+  .styles({
+    "font-size": "20px",
+    "line-height": "30px",
+    "fill": "#a00"
+  })
+
+
+var r16Bracket = svg.append("g")
+  .attr("class", "round16Container")
+  .selectAll("g")
+  .data(d3.range(0,8))
+  .enter().append("g")
+
+r16Bracket.append("path")
+  .attr("d",arc3)
+  .attr("class","groupsTable")
+  .styles({
+    fill:"rgba(0,0,0,.5)",
+    stroke: "rgba(200,0,0,.5)",
+  })
+
+var r8Bracket = svg.append("g")
+  .attr("class", "roundQuarterContainer")
+  .selectAll("g")
+  .data(d3.range(0,4))
+  .enter().append("g")
+
+r8Bracket.append("path")
+  .attr("d",arc4)
+  .attr("class","groupsTable")
+  .styles({
+    fill:"rgba(0,0,0,.5)",
+    stroke: "rgba(200,0,0,.5)",
+  })
+
+var r4Bracket = svg.append("g")
+  .attr("class", "roundSemiContainer")
+  .selectAll("g")
+  .data(d3.range(0,2))
+  .enter().append("g")
+
+r4Bracket.append("path")
+  .attr("d",arc5)
+  .attr("class","groupsTable")
+  .styles({
+    fill:"rgba(0,0,0,.5)",
+    stroke: "rgba(200,0,0,.5)",
+  })
+
+var rFinal = svg.append("g")
+  .attr("class", "roundSemiContainer")
+  .append("ellipse")
+  .attrs({
+    rx: width*cellHeight*2,
+    ry: width*cellHeight*2
+  })
+  .styles({
+    fill:"rgba(100,0,0,.5)",
+
+  })
+
+
+var rWinnerBracket = svg.append("g")
+  .attr("class", "rWinnerContainer")
+  .append("ellipse")
+  .attrs({
+    rx: width*cellHeight,
+    ry: width*cellHeight
+  })
+  // .attr('text-anchor','middle')
+  // .attr("x", d=>arc1.centroid(d)[0])
+  // .attr("y", d=>arc1.centroid(d)[1])
+  // .attr("transform",`rotate(${45})`)
+  // .styles({
+  //   "fill":"#0a0",
+  //   "font-size": "20px"
+  // })
+
+
+
+// d3.selectAll(".groupContainer")
+
+// svg.append("arc")
+// var svg = d3.select(".container").append("svg")
+// var groups = 6;
+
+// for(var i=0; i<groups;i++){
+
+
+// svr.append(arc)
+// }
+
+
+</script>
+</body>
+</html>
