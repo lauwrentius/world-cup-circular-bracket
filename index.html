@@ -61,6 +61,9 @@ gAngle = (d,g) => [(d*360/g)+1,(d*(360/g))+(360/g)-1]
 
 r16Angle =  d => [(d*360/8)+1,(d*(360/8))+(360/8)-1]
 
+
+
+
 $.getJSON("http://localhost:8888/world-cup-bracket/api/teams", (data)=>{
   // console.log(data[0]);
   for( key in data[0]){
@@ -91,14 +94,17 @@ var arc2 = d3.arc()
     .innerRadius(width*(cellHeight*6-.02))
     .outerRadius(width*(cellHeight*5+.01))
     .startAngle((d,i)=>{
-      var gStart = gAngle(d, groups)[0]
-      var tWidth = (gAngle(d, groups)[1] - gAngle(d, groups)[0])/4
+      console.log(d,i)
+      var gIdx = d.group-1
+      var gStart = gAngle(gIdx, groups)[0]
+      var tWidth = (gAngle(gIdx, groups)[1] - gAngle(gIdx, groups)[0])/4
 
       return toRad( gStart+(tWidth*i) )
     })
     .endAngle((d,i)=>{
-      var gStart = gAngle(d, groups)[0]
-      var tWidth = (gAngle(d, groups)[1] - gAngle(d, groups)[0])/4
+      var gIdx = d.group
+      var gStart = gAngle(gIdx, groups)[0]
+      var tWidth = (gAngle(gIdx, groups)[1] - gAngle(gIdx, groups)[0])/4
       return toRad( gStart+(tWidth*(i+1)) )
     })
 
@@ -146,49 +152,63 @@ console.log(gRange)
 //   .attr('d', arc)
 //   .style("fill","#c00")
 //   .style("stroke","#")
-var groupsBracket = svg.append("g")
-  .attr("class", "groupsContainer")
-  .selectAll("g")
-  .data(gRange)
-  .enter().append("g")
 
-groupsBracket.append("path")
-  .attr("d",arc1)
-  .attr("class","groupsTable")
-  .styles({
-    fill:"rgba(0,0,0,.5)",
-    stroke: "rgba(200,0,0,.5)",
-  })
+// var getGroups = (g,i) => {
+//
+// }
 
-groupsBracket.each((d,i)=>{
-    console.log(d,i)
-  })
-  .selectAll(".groupTeams")
-  .data(d=>Array(4).fill(d))
-  .enter()
-  .append("path")
-  .attr("d",arc2)
-  .attr("class","groupTeams")
-  .styles({
-    fill:"rgba(0,255,0,.5)",
-    stroke: "rgba(0,0,100,.5)",
-  })
+var fillGroups = groups=>{
 
-groupsBracket.append("text")
-  .text(d=>String.fromCharCode(d+65))
-  .attr("transform", d=>{
-    var t = arc1.centroid(d),
-      r = (d*(360/groups))+(360/groups/2)
-    return `translate(${t}) rotate(${r})`
-  })
-  // .attr("dy", ".35em")
-  .attr('text-anchor','middle')
-  .attr('alignment-baseline','central')
-  .styles({
-    "font-size": "20px",
-    "line-height": "30px",
-    "fill": "#a00"
-  })
+  var groupsBracket = svg.append("g")
+    .attr("class", "groupsContainer")
+    .selectAll("g")
+    .data(gRange)
+    .enter().append("g")
+
+  groupsBracket.append("path")
+    .attr("d",arc1)
+    .attr("class","groupsTable")
+    .styles({
+      fill:"rgba(0,0,0,.5)",
+      stroke: "rgba(200,0,0,.5)",
+    })
+
+  groupsBracket.selectAll(".groupTeams")
+    .data(d=>{
+      // console.log(Object.values(groups).filter(o=>o.group==d))
+      // console.log(d)
+
+      // return Array(4).fill(d)
+      return Object.values(groups).filter(o=>o.group==d)
+    })
+    .enter()
+    .append("path")
+    .attr("d",arc2)
+    .attr("class","groupTeams")
+    .styles({
+      fill:"rgba(0,0,0,.1)",
+      stroke: "rgba(0,0,100,.5)",
+    })
+
+  // groupsBracket.append("text")
+  //   .text(d=>String.fromCharCode(d+65))
+  //   .attr("transform", d=>{
+  //     var t = arc1.centroid(d),
+  //       r = (d*(360/groups))+(360/groups/2)
+  //     return `translate(${t}) rotate(${r})`
+  //   })
+  //   // .attr("dy", ".35em")
+  //   .attr('text-anchor','middle')
+  //   .attr('alignment-baseline','central')
+  //   .styles({
+  //     "font-size": "20px",
+  //     "line-height": "30px",
+  //     "fill": "#a00"
+  //   })
+}
+
+
+
 
 
 var r16Bracket = svg.append("g")
@@ -275,7 +295,10 @@ var rWinnerBracket = svg.append("g")
 
 // svr.append(arc)
 // }
-
+$.getJSON("http://localhost:8888/world-cup-bracket/api/groups", (data)=>{
+  console.log("*",data);
+  fillGroups(data[0])
+});
 
 </script>
 </body>

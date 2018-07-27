@@ -29,6 +29,33 @@ $app->get('/', function() use($app){
 	// echo getConnection();
 });
 
+$app->get('/groups', function() use ($app) {
+	$sql_query = "SELECT * FROM groups
+		LEFT JOIN teams
+		ON groups.team_id = teams.team_id
+		ORDER BY name;";
+
+	try {
+		$users = [];
+		$db = getConnection();
+		$stmt = $db->query($sql_query);
+
+		do{
+			$arr = [];
+			while( $row = $stmt->fetch(PDO::FETCH_ASSOC) ){
+				$arr[ reset($row) ] = $row;
+			}
+			array_push( $users, $arr);
+
+		}while( $stmt->nextRowset() );
+		$db = null;
+		echo json_encode($users, JSON_NUMERIC_CHECK);
+	}
+	catch(PDOException $e) {
+		echo '{"error":{"text":'. $e->getMessage() .'}}';
+	}
+});
+
 $app->get('/teams', function() use ($app) {
 
 	$sql_query = "SELECT * FROM teams ORDER BY name;";
